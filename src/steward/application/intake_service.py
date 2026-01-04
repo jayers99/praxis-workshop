@@ -40,35 +40,40 @@ def find_unique_id(items_path: Path, base_slug: str, timestamp: datetime) -> str
 
 
 def intake_item(
-    source_name: str,
+    source: str,
     custom_slug: str | None = None,
     move: bool = False,
 ) -> Item:
-    """Intake an item from inbox to workshop.
+    """Intake an item from any path to workshop.
 
     Args:
-        source_name: Name of file/folder in inbox.
-        custom_slug: Optional custom slug (otherwise derived from source_name).
+        source: Path to file/folder (absolute, relative, or name in inbox).
+        custom_slug: Optional custom slug (otherwise derived from source name).
         move: If True, move the source. If False (default), copy it.
 
     Returns:
         The created Item.
 
     Raises:
-        ItemNotFoundError: If source doesn't exist in inbox.
+        ItemNotFoundError: If source doesn't exist.
     """
     workshop_path = get_workshop_path()
     inbox_path = workshop_path / "1-inbox"
     items_path = workshop_path / "9-items"
     intake_stage_path = workshop_path / get_stage_path(Stage.INTAKE)
 
-    # Find source in inbox
-    source_path = inbox_path / source_name
+    # Resolve source path - check in order:
+    # 1. As given (absolute or relative to cwd)
+    # 2. In inbox
+    source_path = Path(source)
     if not source_path.exists():
-        raise ItemNotFoundError(f"not found in inbox: {source_name}")
+        # Try inbox
+        source_path = inbox_path / source
+        if not source_path.exists():
+            raise ItemNotFoundError(f"not found: {source}")
 
-    # Generate slug
-    slug = custom_slug if custom_slug else slugify(source_name)
+    # Generate slug from the source filename/foldername
+    slug = custom_slug if custom_slug else slugify(source_path.name)
 
     # Generate unique item ID
     now = datetime.now()

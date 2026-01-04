@@ -94,7 +94,7 @@ def init() -> None:
 def intake(
     source: Annotated[
         str,
-        typer.Argument(help="File or folder name in inbox."),
+        typer.Argument(help="Path to file or folder."),
     ],
     slug: Annotated[
         str | None,
@@ -109,23 +109,29 @@ def intake(
         typer.Option(
             "--move",
             "-m",
-            help="Move instead of copy (removes source from inbox).",
+            help="Move instead of copy (removes source after intake).",
         ),
     ] = False,
 ) -> None:
-    """Intake an item from inbox to workshop.
+    """Intake an item from any path to workshop.
 
-    Copies (default) or moves the specified file or folder from 1-inbox/
-    to 9-items/, creates status.yaml, and creates a symlink in 3-intake/.
+    Copies (default) or moves the specified file or folder to 9-items/,
+    creates status.yaml, and creates a symlink in 3-intake/.
 
-    By default, the source is copied (preserved in inbox). Use --move to
-    remove the source from inbox after intake.
+    Source can be:
+    - An absolute path: /path/to/my-idea.md
+    - A relative path: ./ideas/my-idea.md
+    - A name in inbox: my-idea.md (looks in _workshop/1-inbox/)
+
+    By default, the source is copied (preserved). Use --move to remove
+    the source after intake.
 
     Examples:
-        steward intake my-idea.md
-        steward intake my-folder/
-        steward intake "My Project" --slug my-project
-        steward intake my-idea.md --move
+        steward intake my-idea.md                    # from inbox
+        steward intake ./drafts/feature.md           # from relative path
+        steward intake /tmp/project-folder/          # from absolute path
+        steward intake my-idea.md --move             # move instead of copy
+        steward intake ./idea.md --slug my-feature   # custom slug
     """
     console = get_console()
     err_console = get_error_console()
