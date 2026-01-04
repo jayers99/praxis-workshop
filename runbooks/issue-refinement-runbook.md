@@ -1,13 +1,14 @@
-# Refinement Runbook v3.3
+# Issue Refinement Runbook v3.4
 
 **Purpose:** Transform a rough backlog idea into an **execution-ready GitHub issue** (feature or research). This runbook **separates refinement from implementation** and provides explicit human approval gates.
 
-**Research note:** For research tickets, use the research-first prompts and guardrails in `bench/backlog/_templates/ticket-refinement-runbook-research-companion.md`.
+**Research note:** For research tickets, use the research-first prompts and guardrails in `issue-refinement-runbook-research-companion.md`.
 
 **Supersedes:** `ai-session-runbook-refined-feature.md` (v1, now deprecated)
 
 **Changelog:**
 
+- v3.4: Migrated to steward CLI backend; working folder now uses `_workshop/` structure with symlink-based stage management
 - v2.3: Renamed final draft artifact to `7.10-issue-draft.md`; removed double-stop before Checkpoint 2 (Phase 5 flows directly to Checkpoint 2, revision loop only on non-acceptance)
 - v2.2: Pre-CCR spikes for high-complexity (`1.30-`), strict QA KICKBACK enforcement, sizing + split analysis at Checkpoint 3 (human decision), console stats in retrospective, enhanced cold-start context for split tickets
 - v2.1: Added warm start, ticket complexity, spike inheritance, checkpoint diffs, consensus CCR format, retrospective, context window tracking
@@ -82,7 +83,8 @@ After Checkpoint 2, enter the **AI Implementation Review Loop**:
 ## Session Contract
 
 - **Mode:** Active session logging in the working folder
-- **Working folder:** Always under `bench/wip/<slug>/`
+- **Working folder:** Always under `_workshop/5-active/3-forge/<slug>/` (via symlink to canonical `_workshop/9-items/...`)
+- **Stage management:** All transitions via `steward stage <slug> <stage>` commands
 - **Separation:** This runbook ends after GitHub issue creation. For implementation, use a separate runbook.
 - **Determinism:** Safe defaults, no overwrites unless requested
 - **Approval:** Semantic acceptance required at checkpoints (e.g., "ACCEPT", "I accept this draft", "Looks good — proceed")
@@ -155,10 +157,12 @@ If the backlog folder references a **parent ticket** or **blocking dependency**:
 2. **Research the parent ticket:**
 
    - Read the parent GitHub issue (use `gh issue view`)
-   - **Search archived refinement artifacts** in `bench/trash/`:
+   - **Search archived refinement artifacts:**
      ```bash
-     # Find parent ticket's refinement folder by issue number
-     ls bench/trash/ | grep "^<parent-issue-number>-"
+     # Find parent ticket's refinement artifacts
+     steward list --stage archive | grep "<parent-slug>"
+     # Or search canonical items directly:
+     ls _workshop/9-items/ | grep "<parent-slug>"
      ```
    - Read the parent's spikes, CCR notes, and decisions if more context is needed
    - Understand implementation decisions that carry forward
@@ -182,18 +186,16 @@ If the backlog folder references a **parent ticket** or **blocking dependency**:
 
 **Skip this section** if no parent ticket or blocking dependency is referenced.
 
-### Folder Handling
+### Folder Handling (via Steward)
 
-**If a folder path is provided:**
+**If a folder path or existing workshop item is provided:**
 
-1. If the folder does not exist, create it
-2. **Promote to WIP immediately** by moving/renaming:
-   - From anywhere → `bench/wip/<slug>/`
-   - If already under `bench/wip/`, keep it there
-3. **Naming rules:**
-   - Folder-only input: keep existing basename
-   - Folder + one-sentence idea: compute slug from idea, rename during promotion
-4. Print the exact resulting working folder path
+1. If already in `_workshop/`, use `steward list` to find the item and its current stage
+2. **Move to forge for active refinement:**
+   ```bash
+   steward stage <slug> forge
+   ```
+3. Working folder is now: `_workshop/5-active/3-forge/<slug>/`
 
 **If only a one-sentence idea is provided:**
 
@@ -201,8 +203,13 @@ If the backlog folder references a **parent ticket** or **blocking dependency**:
    - Propose a human-readable project/ticket name
    - Propose a stable folder slug (kebab-case lowercase)
    - Iterate until the human confirms
-2. Create `bench/wip/<slug>/`
-3. Print the exact resulting working folder path
+2. **Create the idea file and intake:**
+   ```bash
+   echo "<idea content>" > $PRAXIS_HOME/_workshop/1-inbox/<slug>.md
+   steward intake <slug>.md
+   steward stage <slug> forge
+   ```
+3. Working folder is now: `_workshop/5-active/3-forge/<slug>/`
 
 ### Slug Rules
 
@@ -211,15 +218,20 @@ If the backlog folder references a **parent ticket** or **blocking dependency**:
 - Collapse/trim multiple dashes
 - Fallback: `empty-slug`
 
-### WIP Folder Collisions
+### Item Collisions
 
-If `bench/wip/<slug>/` already exists:
+If `steward intake` fails with a slug collision:
 
-- **STOP** and ask the human to resolve (do not auto-suffix)
+- Steward auto-appends timestamp suffix to resolve (e.g., `my-feature` → `my-feature-1`)
+- Or **STOP** and ask the human if the slug already exists with different content
 
 ### Scaffold the Nucleus
 
-1. Copy `bench/backlog/_templates/issue-nucleus.md` → `1.10-issue-nucleus.md`
+1. Copy the nucleus template:
+   ```bash
+   cp $PRAXIS_HOME/extensions/praxis-workshop/templates/issue-nucleus.md \
+      $PRAXIS_HOME/_workshop/5-active/3-forge/<slug>/1.10-issue-nucleus.md
+   ```
 2. Print confirmation and start the nucleus iteration loop
 
 ---
@@ -260,7 +272,7 @@ Then the agent may **fast-track to Pre-CCR Nucleus Review**:
 Repeat until the human signals readiness for expert review:
 
 1. Ask clarifying questions needed to make the draft reviewable.
-   - For `Ticket type: research`, prefer research framing (see `bench/backlog/_templates/ticket-refinement-runbook-research-companion.md`).
+   - For `Ticket type: research`, prefer research framing (see `issue-refinement-runbook-research-companion.md`).
 2. Update `1.10-issue-nucleus.md` with answers
 3. Present the updated draft summary
 
@@ -279,8 +291,12 @@ If scope discussions reveal the ticket should be split:
 1. **Decide which part to refine now** — typically the foundation or first increment
 2. **Update the current nucleus** — narrow scope to the chosen part
 3. **Create a backlog stub for the split-off work:**
-   ```
-   bench/backlog/<split-ticket-slug>/0.10-idea.md
+   ```bash
+   # Create idea file and intake to workshop
+   echo "<idea content>" > $PRAXIS_HOME/_workshop/1-inbox/<split-ticket-slug>.md
+   steward intake <split-ticket-slug>.md
+   steward stage <split-ticket-slug> backlog
+   # Item is now at: _workshop/5-active/1-backlog/<split-ticket-slug>/
    ```
 4. **The stub must include:**
 
@@ -310,7 +326,7 @@ If scope discussions reveal the ticket should be split:
 
    ```
    | <date> | Split into 2 tickets | Single large ticket | <rationale> |
-   | <date> | Created backlog stub for <name> | Wait until needed | see bench/backlog/<slug>/ |
+   | <date> | Created backlog stub for <name> | Wait until needed | see _workshop/5-active/1-backlog/<slug>/ |
    ```
 
 6. **Continue refining** the narrowed current ticket
@@ -336,8 +352,8 @@ On receiving the exit signal:
 5. **Run pre-CCR spikes** (if high complexity) — see below
 6. Generate `1.20-issue-draft.md`:
    - Copy the appropriate GitHub issue template:
-     - Feature: `bench/backlog/_templates/github-issue-feature.md`
-     - Research: `bench/backlog/_templates/github-research-issue.md`
+     - Feature: `$PRAXIS_HOME/extensions/praxis-workshop/templates/github-issue-feature.md`
+     - Research: `$PRAXIS_HOME/extensions/praxis-workshop/templates/github-research-issue.md`
    - Fill it using the nucleus content
 7. Proceed immediately to Checkpoint 1
 
@@ -631,7 +647,7 @@ The agent should suggest returning to CCR if:
 
 After Checkpoint 2 is accepted, enter the AI Implementation Review Loop.
 
-If `Ticket type: research`, treat this phase as **AI Research Execution Readiness Review** (see `bench/backlog/_templates/ticket-refinement-runbook-research-companion.md`).
+If `Ticket type: research`, treat this phase as **AI Research Execution Readiness Review** (see `issue-refinement-runbook-research-companion.md`).
 
 ### Initial Review
 
@@ -715,12 +731,12 @@ During spikes, the AI may discover that a conceptual or architectural gap exists
 5. If spawned: create `X.XX-knowledge-gap-flags.md`, initiate research
 6. When research completes: create handoff doc, integrate findings
 
-**Detailed guidance:** See [PKDP Companion](ticket-refinement-runbook-pkdp-companion.md)
+**Detailed guidance:** See [PKDP Companion](issue-refinement-runbook-pkdp-companion.md)
 
 **Templates:**
 
-- `knowledge-gap-flags-template.md` — Track detected gaps
-- `research-handoff-template.md` — Document research handoff
+- `$PRAXIS_HOME/extensions/praxis-workshop/templates/knowledge-gap-flags-template.md` — Track detected gaps
+- `$PRAXIS_HOME/extensions/praxis-workshop/templates/research-handoff-template.md` — Document research handoff
 
 ### Auto-Select Tracer Bullets
 
@@ -918,8 +934,8 @@ Any other response will be treated as revision guidance.
 On Checkpoint 3 acceptance:
 
 1. Use the existing issue template as the base:
-   - Feature: `bench/backlog/_templates/github-issue-feature.md`
-   - Research: `bench/backlog/_templates/github-research-issue.md`
+   - Feature: `$PRAXIS_HOME/extensions/praxis-workshop/templates/github-issue-feature.md`
+   - Research: `$PRAXIS_HOME/extensions/praxis-workshop/templates/github-research-issue.md`
 2. Include the WIP folder link in the issue body
 3. Create the issue and capture the resulting issue URL:
    ```bash
@@ -964,28 +980,29 @@ On Checkpoint 3 acceptance:
 - Always write `<working-folder>/09-gh-issue-created.md` after issue creation
 - GitHub is the source of record
 
-### Archiving Completed WIP Folders
+### Archiving Completed Items
 
-After the retrospective is complete, archive the WIP folder to `bench/trash/`:
+After the retrospective is complete, archive the item via steward:
 
-1. **Move with issue number prefix:**
+1. **Archive via steward:**
 
    ```bash
-   mv bench/wip/<slug> bench/trash/<issue-number>-<slug>
+   steward stage <slug> archive
    ```
 
-   Example: `bench/wip/my-feature` → `bench/trash/125-my-feature`
+   - Item symlink moves to `_workshop/7-exits/3-archive/<slug>`
+   - Canonical data preserved at `_workshop/9-items/YYYY-MM-DD-HHMM__<slug>/`
 
 2. **Purpose:** Preserves refinement artifacts (spikes, CCR notes, decisions) for future reference
 
 3. **Finding prior ticket details:** When a follow-up ticket needs context from a parent ticket's refinement:
 
    ```bash
-   # Search trash by issue number
-   ls bench/trash/ | grep "^<issue-number>-"
+   # Search archived items
+   steward list --stage archive | grep "<slug>"
 
-   # Example: find refinement artifacts for issue #125
-   ls bench/trash/125-*
+   # Or search canonical items directly
+   ls _workshop/9-items/ | grep "<slug>"
    ```
 
 4. **What's preserved:**
@@ -1009,7 +1026,7 @@ The final issue must be **execution-ready**:
 - [ ] Sparse expert citations linking to local notes
 - [ ] WIP folder link included in issue body
 
-For research tickets, also ensure outputs are PKDP-ready (see `bench/backlog/_templates/ticket-refinement-runbook-research-companion.md`).
+For research tickets, also ensure outputs are PKDP-ready (see `issue-refinement-runbook-research-companion.md`).
 
 ---
 
@@ -1017,10 +1034,18 @@ For research tickets, also ensure outputs are PKDP-ready (see `bench/backlog/_te
 
 When picking up work from a previous session:
 
-1. Read all numbered files in the working folder in order (0.xx, 1.xx, 2.xx, etc.)
-2. Check `0.20-decisions.md` for prior decisions still in force
-3. Identify the last completed checkpoint and resume at the next phase
-4. Update `0.10-research-log.md` with "Session resumed" entry
+1. **Find item and current stage:**
+   ```bash
+   steward list | grep "<slug>"
+   ```
+2. **If in shelf, resume to forge:**
+   ```bash
+   steward stage <slug> forge
+   ```
+3. Read all numbered files in the working folder in order (0.xx, 1.xx, 2.xx, etc.)
+4. Check `0.20-decisions.md` for prior decisions still in force
+5. Identify the last completed checkpoint and resume at the next phase
+6. Update `0.10-research-log.md` with "Session resumed" entry
 
 ---
 
@@ -1028,8 +1053,8 @@ When picking up work from a previous session:
 
 This runbook uses (does not duplicate) the existing templates:
 
-- **Feature:** `bench/backlog/_templates/github-issue-feature.md`
-- **Research:** `bench/backlog/_templates/github-research-issue.md`
+- **Feature:** `$PRAXIS_HOME/extensions/praxis-workshop/templates/github-issue-feature.md`
+- **Research:** `$PRAXIS_HOME/extensions/praxis-workshop/templates/github-research-issue.md`
 
 See those files for the required issue structure.
 
