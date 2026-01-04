@@ -10,6 +10,7 @@ Workshop stages follow this structure:
 Stage transitions:
 - Standard: inbox -> intake -> backlog -> forge -> review
 - Fast-track: intake -> forge (skip backlog)
+- Defer: forge -> backlog (return to backlog for later)
 - Shelving: forge <-> shelf (bidirectional)
 - Exits: ANY stage -> handoff | archive | trash
 """
@@ -39,7 +40,7 @@ FORWARD_TRANSITIONS: dict[Stage, set[Stage]] = {
     Stage.INBOX: {Stage.INTAKE},
     Stage.INTAKE: {Stage.BACKLOG, Stage.FORGE},  # forge is fast-track
     Stage.BACKLOG: {Stage.FORGE},
-    Stage.FORGE: {Stage.REVIEW, Stage.SHELF},
+    Stage.FORGE: {Stage.REVIEW, Stage.SHELF, Stage.BACKLOG},  # backlog = defer
     Stage.REVIEW: set(),  # Only terminal exits from review
     Stage.SHELF: {Stage.FORGE},  # Can return to forge
 }

@@ -87,14 +87,22 @@ def intake_item(
     ensure_directory(item_path)
 
     # Copy or move source into item directory
-    dest_path = item_path / source_path.name
-    if move:
-        # Move: rename the source to destination
-        source_path.rename(dest_path)
+    # For directories: copy CONTENTS into item_path (not the folder itself)
+    # For files: copy the file into item_path
+    if source_path.is_dir():
+        if move:
+            # Move directory contents
+            for child in source_path.iterdir():
+                child.rename(item_path / child.name)
+            # Remove empty source directory
+            source_path.rmdir()
+        else:
+            # Copy directory contents (not the directory itself)
+            shutil.copytree(source_path, item_path, dirs_exist_ok=True)
     else:
-        # Copy: preserve source in inbox
-        if source_path.is_dir():
-            shutil.copytree(source_path, dest_path)
+        dest_path = item_path / source_path.name
+        if move:
+            source_path.rename(dest_path)
         else:
             shutil.copy2(source_path, dest_path)
 

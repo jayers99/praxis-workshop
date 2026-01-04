@@ -227,20 +227,39 @@ steward intake <path/to/input> --slug <approved-slug>
 # Original file/folder preserved at source location
 ```
 
-**Step 4: Move to forge for active refinement**
+**Step 4: Choose destination stage**
 
+Ask the user where to place the item:
+
+```
+AskUserQuestion:
+  question: "Where should this item go?"
+  header: "Stage"
+  options:
+    - label: "Backlog (default)"
+      description: "Park in backlog for later refinement"
+    - label: "Forge"
+      description: "Start active refinement now"
+```
+
+**On "Backlog":** Move to backlog and stop.
+```bash
+steward stage <slug> backlog
+```
+Working folder: `_workshop/5-active/1-backlog/<slug>/`
+
+**On "Forge":** Move to forge and continue with Phase 1.
 ```bash
 steward stage <slug> forge
 ```
-
-Working folder is now: `_workshop/5-active/3-forge/<slug>/`
+Working folder: `_workshop/5-active/3-forge/<slug>/`
 
 **If item already exists in workshop:**
 
-Use `steward list` to find the item and its current stage, then move to forge:
+Use `steward list` to find the item and its current stage, then move as needed:
 ```bash
 steward list | grep "<slug>"
-steward stage <slug> forge
+steward stage <slug> <backlog|forge>
 ```
 
 ### Slug Rules
