@@ -15,6 +15,9 @@ This is the **steward CLI** for workshop management in Praxis.
 steward init              # Initialize _workshop/ at $PRAXIS_HOME
 steward intake <file>     # Intake item from inbox to workshop
 steward stage <slug> <stage>  # Transition item to new stage
+steward list              # List all items
+steward list --stage <s>  # Filter by stage
+steward sync              # Regenerate symlinks from status.yaml
 ```
 
 ## Stage Flow
@@ -32,8 +35,10 @@ Exits:      ANY stage → handoff | archive | trash
 |------|---------|
 | `src/steward/cli.py` | CLI entry point (Typer) |
 | `src/steward/domain/stages.py` | Stage definitions and transitions |
-| `src/steward/application/` | Service layer (init, intake, stage) |
+| `src/steward/application/` | Service layer (init, intake, stage, sync, list) |
 | `tests/features/` | Gherkin scenarios |
+| `runbooks/workshop-integration.md` | Workflow mapping from bench/ to _workshop/ |
+| `templates/issue-nucleus.md` | Ticket nucleus template |
 
 ## Architecture
 

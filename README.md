@@ -20,6 +20,13 @@ steward intake my-idea.md
 # Transition item to a new stage
 steward stage my-idea backlog
 steward stage my-idea forge
+
+# List items
+steward list                  # All items
+steward list --stage forge    # Filter by stage
+
+# Regenerate symlinks from status.yaml
+steward sync
 ```
 
 ## Stage Flow
@@ -49,6 +56,19 @@ _workshop/
 ├── 8-epics/              # Ordered batching (gitignored)
 └── 9-items/              # Canonical storage (tracked)
 ```
+
+## Runbooks & Templates
+
+```
+runbooks/
+└── workshop-integration.md   # How to use steward with ticket refinement
+
+templates/
+├── issue-nucleus.md          # Ticket nucleus template
+└── status.yaml               # Item status template
+```
+
+See `runbooks/workshop-integration.md` for workflow mapping from `bench/` to `_workshop/`.
 
 ## Development
 
