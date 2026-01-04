@@ -2,7 +2,7 @@
 
 **Purpose:** Transform a rough backlog idea into an **execution-ready GitHub issue** (feature or research). This runbook **separates refinement from implementation** and provides explicit human approval gates.
 
-**Research note:** For research tickets, use the research-first prompts and guardrails in `issue-refinement-runbook-research-companion.md`.
+**Research note:** For standalone research (producing research-library artifacts), use `research-runbook.md` instead. This runbook handles research *tickets* (GitHub issues for research work).
 
 **Supersedes:** `ai-session-runbook-refined-feature.md` (v1, now deprecated)
 
@@ -324,7 +324,7 @@ Then the agent may **fast-track to Pre-CCR Nucleus Review**:
 Repeat until the human signals readiness for expert review:
 
 1. Ask clarifying questions needed to make the draft reviewable.
-   - For `Ticket type: research`, prefer research framing (see `issue-refinement-runbook-research-companion.md`).
+   - For `Ticket type: research`, prefer research framing: focus on research questions, methods, evidence standards, and deliverables rather than implementation details.
 2. Update `1.10-issue-nucleus.md` with answers
 3. Present the updated draft summary
 
@@ -717,7 +717,7 @@ The agent should suggest returning to CCR if:
 
 After Checkpoint 2 is accepted, enter the AI Implementation Review Loop.
 
-If `Ticket type: research`, treat this phase as **AI Research Execution Readiness Review** (see `issue-refinement-runbook-research-companion.md`).
+If `Ticket type: research`, treat this phase as **AI Research Execution Readiness Review**: focus on research question clarity, method/evidence criteria, deliverables, and durable artifact location.
 
 ### Initial Review
 
@@ -801,7 +801,7 @@ During spikes, the AI may discover that a conceptual or architectural gap exists
 5. If spawned: create `X.XX-knowledge-gap-flags.md`, initiate research
 6. When research completes: create handoff doc, integrate findings
 
-**Detailed guidance:** See [PKDP Companion](issue-refinement-runbook-pkdp-companion.md)
+**Note:** Knowledge gap handling is simplified. For significant gaps requiring dedicated research, use `research-runbook.md` to spawn a standalone research session.
 
 **Templates:**
 
@@ -1110,7 +1110,7 @@ The final issue must be **execution-ready**:
 - [ ] Sparse expert citations linking to local notes
 - [ ] WIP folder link included in issue body
 
-For research tickets, also ensure outputs are PKDP-ready (see `issue-refinement-runbook-research-companion.md`).
+For research tickets, also ensure outputs are PKDP-ready: clear claims, evidence, caveats, and explicit separation between observations, synthesis, and recommendations.
 
 ---
 
