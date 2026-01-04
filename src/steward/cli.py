@@ -4,6 +4,8 @@ This module provides the steward CLI for workshop management:
 - steward init: Initialize workshop directory structure
 - steward intake: Move items from inbox to workshop
 - steward stage: Transition items between stages
+- steward sync: Regenerate symlinks from status.yaml
+- steward list: List items in workshop
 """
 
 from typing import Annotated
@@ -11,7 +13,13 @@ from typing import Annotated
 import typer
 
 from steward import __version__
-from steward.application import init_workshop, intake_item, stage_item
+from steward.application import (
+    init_workshop,
+    intake_item,
+    list_items,
+    stage_item,
+    sync_workshop,
+)
 from steward.domain import (
     AmbiguousItemError,
     ExitCode,
@@ -177,6 +185,81 @@ def stage(
         valid_stages = ", ".join(s.value for s in Stage)
         err_console.print(f"[dim]Valid stages: {valid_stages}[/dim]")
         raise typer.Exit(ExitCode.INVALID_TRANSITION) from None
+
+    except WorkshopError as e:
+        err_console.print(f"[red]Error:[/red] {e.message}")
+        raise typer.Exit(ExitCode.ENV_ERROR) from None
+
+
+@app.command()
+def sync() -> None:
+    """Regenerate all symlinks from status.yaml files.
+
+    Clears all existing symlinks in stage folders and recreates them
+    based on the stage field in each item's status.yaml.
+
+    Use this command to fix broken symlinks or after manual edits
+    to status.yaml files.
+
+    Examples:
+        steward sync
+    """
+    console = get_console()
+    err_console = get_error_console()
+
+    try:
+        created, removed = sync_workshop()
+        console.print("[green]Sync complete[/green]")
+        console.print(f"  Symlinks created: {created}")
+        console.print(f"  Orphans removed: {removed}")
+        raise typer.Exit(ExitCode.SUCCESS)
+
+    except WorkshopError as e:
+        err_console.print(f"[red]Error:[/red] {e.message}")
+        raise typer.Exit(ExitCode.ENV_ERROR) from None
+
+
+@app.command(name="list")
+def list_cmd(
+    stage_filter: Annotated[
+        str | None,
+        typer.Option(
+            "--stage",
+            "-s",
+            help="Filter by stage name.",
+        ),
+    ] = None,
+) -> None:
+    """List items in the workshop.
+
+    Shows all items with their current stage, or filter by stage.
+
+    Examples:
+        steward list
+        steward list --stage forge
+        steward list -s backlog
+    """
+    console = get_console()
+    err_console = get_error_console()
+
+    try:
+        items = list_items(stage_filter)
+
+        if not items:
+            console.print("[dim]No items found[/dim]")
+            raise typer.Exit(ExitCode.SUCCESS)
+
+        console.print(f"[bold]Items ({len(items)}):[/bold]")
+        for item in items:
+            console.print(f"  {item.slug} [{item.stage.value}]")
+
+        raise typer.Exit(ExitCode.SUCCESS)
+
+    except ValueError:
+        err_console.print(f"[red]Error:[/red] Invalid stage: {stage_filter}")
+        valid_stages = ", ".join(s.value for s in Stage)
+        err_console.print(f"[dim]Valid stages: {valid_stages}[/dim]")
+        raise typer.Exit(ExitCode.INVALID_ARGUMENT) from None
 
     except WorkshopError as e:
         err_console.print(f"[red]Error:[/red] {e.message}")
