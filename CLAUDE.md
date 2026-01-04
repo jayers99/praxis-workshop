@@ -1,6 +1,6 @@
-# Praxis Workshop — Agent Notes
+# Praxis Workshop
 
-This is the **steward CLI** for workshop management in Praxis.
+Steward CLI for workshop management in Praxis.
 
 ## Purpose
 
