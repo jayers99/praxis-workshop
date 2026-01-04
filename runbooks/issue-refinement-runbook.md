@@ -8,7 +8,7 @@
 
 **Changelog:**
 
-- v3.4: Migrated to steward CLI backend; working folder now uses `_workshop/` structure with symlink-based stage management
+- v3.4: Migrated to steward CLI backend; working folder now uses `_workshop/` structure with symlink-based stage management; clarified inbox (no rules) → intake (standards later) → forge flow; accept single file or folder as input
 - v2.3: Renamed final draft artifact to `7.10-issue-draft.md`; removed double-stop before Checkpoint 2 (Phase 5 flows directly to Checkpoint 2, revision loop only on non-acceptance)
 - v2.2: Pre-CCR spikes for high-complexity (`1.30-`), strict QA KICKBACK enforcement, sizing + split analysis at Checkpoint 3 (human decision), console stats in retrospective, enhanced cold-start context for split tickets
 - v2.1: Added warm start, ticket complexity, spike inheritance, checkpoint diffs, consensus CCR format, retrospective, context window tracking
@@ -138,9 +138,11 @@ Phases are numbered 0, 1, 3, 4, 5, 6, 9 (with gaps at 2, 7, 8). This is intentio
 The agent must determine:
 
 1. **Ticket type:** `feature` or `research`
-2. **Starting input:** Either:
-   - An existing folder path (may be blank or partially filled)
-   - A one-sentence idea (no folder provided)
+2. **Starting input:** One of:
+   - A single file (idea, notes, rough spec)
+   - A folder of files (multiple related artifacts)
+   - An existing workshop item (already in `_workshop/`)
+   - A one-sentence idea (no files provided)
 
 Inputs can be provided in free-form order; the agent infers the values.
 
@@ -186,30 +188,73 @@ If the backlog folder references a **parent ticket** or **blocking dependency**:
 
 **Skip this section** if no parent ticket or blocking dependency is referenced.
 
+### Inbox vs Intake
+
+The workshop uses two stages for initial capture:
+
+| Stage | Location | Purpose | Rules |
+|-------|----------|---------|-------|
+| **Inbox** | `_workshop/1-inbox/` | Raw capture | None — accept anything |
+| **Intake** | `_workshop/3-intake/` | First shaping | Standards can be applied later |
+
+**Flow:** Input → Inbox → (shape until ready) → Intake → Forge
+
 ### Folder Handling (via Steward)
 
-**If a folder path or existing workshop item is provided:**
+**Step 1: Move input to inbox**
 
-1. If already in `_workshop/`, use `steward list` to find the item and its current stage
-2. **Move to forge for active refinement:**
-   ```bash
-   steward stage <slug> forge
-   ```
-3. Working folder is now: `_workshop/5-active/3-forge/<slug>/`
+Accept a single file or folder of files and move to inbox:
 
-**If only a one-sentence idea is provided:**
+```bash
+# Single file
+mv <path/to/idea.md> $PRAXIS_HOME/_workshop/1-inbox/
 
+# Folder of files
+mv <path/to/folder/> $PRAXIS_HOME/_workshop/1-inbox/<slug>/
+```
+
+If only a one-sentence idea is provided:
 1. Run an interactive **naming loop**:
    - Propose a human-readable project/ticket name
    - Propose a stable folder slug (kebab-case lowercase)
    - Iterate until the human confirms
-2. **Create the idea file and intake:**
+2. Create the idea file in inbox:
    ```bash
    echo "<idea content>" > $PRAXIS_HOME/_workshop/1-inbox/<slug>.md
-   steward intake <slug>.md
-   steward stage <slug> forge
    ```
-3. Working folder is now: `_workshop/5-active/3-forge/<slug>/`
+
+**Step 2: Shape in inbox (no rules)**
+
+Work on the content in inbox until it's ready for intake:
+- Read and understand the raw input
+- Clarify ticket type (`feature` or `research`)
+- Ensure there's enough context to proceed
+
+**Step 3: Intake to workshop**
+
+When ready, run intake to bring the item into the workshop:
+
+```bash
+steward intake <filename-or-folder>
+# Creates: _workshop/9-items/YYYY-MM-DD-HHMM__<slug>/
+# Symlink: _workshop/3-intake/<slug> → canonical item
+```
+
+**Step 4: Move to forge for active refinement**
+
+```bash
+steward stage <slug> forge
+```
+
+Working folder is now: `_workshop/5-active/3-forge/<slug>/`
+
+**If item already exists in workshop:**
+
+Use `steward list` to find the item and its current stage, then move to forge:
+```bash
+steward list | grep "<slug>"
+steward stage <slug> forge
+```
 
 ### Slug Rules
 
