@@ -1046,35 +1046,53 @@ On Checkpoint 3 acceptance:
 - Always write `<working-folder>/09-gh-issue-created.md` after issue creation
 - GitHub is the source of record
 
-### Archiving Completed Items
+### Handoff to GitHub
 
-After the retrospective is complete, archive the item via steward:
+After the retrospective is complete, hand off the item to GitHub for implementation:
 
-1. **Archive via steward:**
+1. **Create handoff symlink with issue number prefix:**
 
    ```bash
-   steward stage <slug> archive
+   # Get issue number (zero-padded to 3 places)
+   issue_number="134"  # from gh issue create output
+   padded_issue=$(printf "%03d" "$issue_number")
+
+   # Remove from forge, create handoff symlink
+   rm "$PRAXIS_HOME/_workshop/5-active/3-forge/<slug>"
+   ln -s "$PRAXIS_HOME/_workshop/9-items/YYYY-MM-DD-HHMM__<slug>" \
+         "$PRAXIS_HOME/_workshop/7-exits/1-handoff/${padded_issue}-<slug>"
    ```
 
-   - Item symlink moves to `_workshop/7-exits/3-archive/<slug>`
+   - Symlink naming: `<issue#, 0-padded to 3>-<slug>` (e.g., `134-privacy-guardrails`)
    - Canonical data preserved at `_workshop/9-items/YYYY-MM-DD-HHMM__<slug>/`
 
-2. **Purpose:** Preserves refinement artifacts (spikes, CCR notes, decisions) for future reference
+2. **Update status.yaml:**
 
-3. **Finding prior ticket details:** When a follow-up ticket needs context from a parent ticket's refinement:
+   ```yaml
+   stage: handoff
+   gh_issue: 134
+   ```
+
+3. **Purpose:**
+   - Indicates item is now tracked in GitHub (source of truth)
+   - Issue number prefix makes it easy to correlate handoff artifacts with GitHub issues
+   - Preserves refinement artifacts for implementation reference
+
+4. **Finding handoff details during implementation:**
 
    ```bash
-   # Search archived items
-   steward list --stage archive | grep "<slug>"
+   # Find by issue number
+   ls _workshop/7-exits/1-handoff/ | grep "^134-"
 
    # Or search canonical items directly
    ls _workshop/9-items/ | grep "<slug>"
    ```
 
-4. **What's preserved:**
+5. **What's preserved:**
    - Spikes and research (`6.20-refinement-spikes.md`)
    - CCR expert reviews (`3.10-ccr-notes.md`)
    - Decision log (`0.20-decisions.md`)
+   - Tracer bullets (`6.30-tracer-bullets.md`)
    - Implementation details not in the GitHub issue
 
 ---
