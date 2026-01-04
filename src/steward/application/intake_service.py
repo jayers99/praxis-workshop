@@ -1,5 +1,6 @@
-"""Intake service - move items from inbox to workshop."""
+"""Intake service - move or copy items from inbox to workshop."""
 
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -41,12 +42,14 @@ def find_unique_id(items_path: Path, base_slug: str, timestamp: datetime) -> str
 def intake_item(
     source_name: str,
     custom_slug: str | None = None,
+    move: bool = False,
 ) -> Item:
     """Intake an item from inbox to workshop.
 
     Args:
         source_name: Name of file/folder in inbox.
         custom_slug: Optional custom slug (otherwise derived from source_name).
+        move: If True, move the source. If False (default), copy it.
 
     Returns:
         The created Item.
@@ -62,7 +65,7 @@ def intake_item(
     # Find source in inbox
     source_path = inbox_path / source_name
     if not source_path.exists():
-        raise ItemNotFoundError(f"File not found in inbox: {source_name}")
+        raise ItemNotFoundError(f"not found in inbox: {source_name}")
 
     # Generate slug
     slug = custom_slug if custom_slug else slugify(source_name)
@@ -78,9 +81,17 @@ def intake_item(
     item_path = items_path / item_id
     ensure_directory(item_path)
 
-    # Move source into item directory
+    # Copy or move source into item directory
     dest_path = item_path / source_path.name
-    source_path.rename(dest_path)
+    if move:
+        # Move: rename the source to destination
+        source_path.rename(dest_path)
+    else:
+        # Copy: preserve source in inbox
+        if source_path.is_dir():
+            shutil.copytree(source_path, dest_path)
+        else:
+            shutil.copy2(source_path, dest_path)
 
     # Create status.yaml
     status = Status(stage=Stage.INTAKE, created=now, updated=now)

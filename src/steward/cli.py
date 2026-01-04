@@ -104,22 +104,36 @@ def intake(
             help="Custom slug (otherwise derived from source name).",
         ),
     ] = None,
+    move: Annotated[
+        bool,
+        typer.Option(
+            "--move",
+            "-m",
+            help="Move instead of copy (removes source from inbox).",
+        ),
+    ] = False,
 ) -> None:
     """Intake an item from inbox to workshop.
 
-    Moves the specified file or folder from 1-inbox/ to 9-items/,
-    creates status.yaml, and creates a symlink in 3-intake/.
+    Copies (default) or moves the specified file or folder from 1-inbox/
+    to 9-items/, creates status.yaml, and creates a symlink in 3-intake/.
+
+    By default, the source is copied (preserved in inbox). Use --move to
+    remove the source from inbox after intake.
 
     Examples:
         steward intake my-idea.md
+        steward intake my-folder/
         steward intake "My Project" --slug my-project
+        steward intake my-idea.md --move
     """
     console = get_console()
     err_console = get_error_console()
 
     try:
-        item = intake_item(source, custom_slug=slug)
-        console.print(f"[green]Intake complete:[/green] {item.id}")
+        item = intake_item(source, custom_slug=slug, move=move)
+        action = "moved" if move else "copied"
+        console.print(f"[green]Intake complete ({action}):[/green] {item.id}")
         console.print(f"  Stage: {item.stage.value}")
         console.print(f"  Path: {item.path}")
         raise typer.Exit(ExitCode.SUCCESS)
