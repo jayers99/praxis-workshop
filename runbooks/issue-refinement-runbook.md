@@ -1,4 +1,4 @@
-# Issue Refinement Runbook v3.4
+# Issue Refinement Runbook v3.5
 
 **Purpose:** Transform a rough backlog idea into an **execution-ready GitHub issue** (feature or research). This runbook **separates refinement from implementation** and provides explicit human approval gates.
 
@@ -8,6 +8,7 @@
 
 **Changelog:**
 
+- v3.5: Changed CCR default to full panel for all non-trivial tickets; QA Gherkin validation is important and full panel is lightweight (~2-3 min); added AskUserQuestion at all checkpoints for tab-completion acceptance
 - v3.4: Migrated to steward CLI backend; working folder now uses `_workshop/` structure with symlink-based stage management; clarified inbox (no rules) → intake (standards later) → forge flow; accept single file or folder as input
 - v2.3: Renamed final draft artifact to `7.10-issue-draft.md`; removed double-stop before Checkpoint 2 (Phase 5 flows directly to Checkpoint 2, revision loop only on non-acceptance)
 - v2.2: Pre-CCR spikes for high-complexity (`1.30-`), strict QA KICKBACK enforcement, sizing + split analysis at Checkpoint 3 (human decision), console stats in retrospective, enhanced cold-start context for split tickets
@@ -19,8 +20,8 @@
 
 ```mermaid
 flowchart TD
-    subgraph Phase0_1["Phase 0-1: Intake & Drafting"]
-        A[Phase 0: Intake] --> B[Phase 1: Draft Nucleus Loop]
+    subgraph Phase0_1["Phase 0-1: Slug & Drafting"]
+        A[Phase 0: Slug Validation] --> B[Phase 1: Draft Nucleus Loop]
     end
 
     B --> C{{"⛔ Checkpoint 1"}}
@@ -131,7 +132,7 @@ Phases are numbered 0, 1, 3, 4, 5, 6, 9 (with gaps at 2, 7, 8). This is intentio
 
 ---
 
-## Phase 0: Intake & Classification
+## Phase 0: Slug Validation & Intake
 
 ### Required Inputs
 
@@ -188,56 +189,42 @@ If the backlog folder references a **parent ticket** or **blocking dependency**:
 
 **Skip this section** if no parent ticket or blocking dependency is referenced.
 
-### Inbox vs Intake
+### Slug Validation Loop
 
-The workshop uses two stages for initial capture:
+The only job from input to intake is validating the slug. Once the slug is acceptable, intake immediately.
 
-| Stage | Location | Purpose | Rules |
-|-------|----------|---------|-------|
-| **Inbox** | `_workshop/1-inbox/` | Raw capture | None — accept anything |
-| **Intake** | `_workshop/3-intake/` | First shaping | Standards can be applied later |
+**Step 1: Calculate proposed slug**
 
-**Flow:** Input → Inbox → (shape until ready) → Intake → Forge
+Derive a slug from the input:
+- From filename: `my-feature-idea.md` → `my-feature-idea`
+- From folder name: `12-praxis-guide-docs/` → `praxis-guide-docs`
+- Strip numeric prefixes (e.g., `12-` prefix)
+- Apply slug rules (see below)
 
-### Folder Handling (via Steward)
+**Step 2: Slug approval loop**
 
-**Step 1: Move input to inbox**
+Present the proposed slug to the user:
 
-Accept a single file or folder of files and move to inbox:
+```
+Proposed slug: <slug>
 
-```bash
-# Single file
-mv <path/to/idea.md> $PRAXIS_HOME/_workshop/1-inbox/
-
-# Folder of files
-mv <path/to/folder/> $PRAXIS_HOME/_workshop/1-inbox/<slug>/
+Accept this slug? (Enter to accept, or type alternative)
 ```
 
-If only a one-sentence idea is provided:
-1. Run an interactive **naming loop**:
-   - Propose a human-readable project/ticket name
-   - Propose a stable folder slug (kebab-case lowercase)
-   - Iterate until the human confirms
-2. Create the idea file in inbox:
-   ```bash
-   echo "<idea content>" > $PRAXIS_HOME/_workshop/1-inbox/<slug>.md
-   ```
-
-**Step 2: Shape in inbox (no rules)**
-
-Work on the content in inbox until it's ready for intake:
-- Read and understand the raw input
-- Clarify ticket type (`feature` or `research`)
-- Ensure there's enough context to proceed
+If user provides alternative:
+1. Normalize their input using slug rules
+2. Present the normalized version for confirmation
+3. Repeat until accepted
 
 **Step 3: Intake to workshop**
 
-When ready, run intake to bring the item into the workshop:
+Once slug is accepted, run intake (copies by default, preserves original):
 
 ```bash
-steward intake <filename-or-folder>
-# Creates: _workshop/9-items/YYYY-MM-DD-HHMM__<slug>/
+steward intake <path/to/input> --slug <approved-slug>
+# Copies to: _workshop/9-items/YYYY-MM-DD-HHMM__<slug>/
 # Symlink: _workshop/3-intake/<slug> → canonical item
+# Original file/folder preserved at source location
 ```
 
 **Step 4: Move to forge for active refinement**
@@ -261,6 +248,7 @@ steward stage <slug> forge
 - Kebab-case lowercase
 - Replace non-directory-safe characters with `-`
 - Collapse/trim multiple dashes
+- Strip leading/trailing dashes
 - Fallback: `empty-slug`
 
 ### Item Collisions
@@ -431,7 +419,7 @@ If ticket complexity is **High** or **Medium-High**, run spikes BEFORE Checkpoin
 
 ## Checkpoint 1 — Approve to Start Expert Review (STOP POINT)
 
-**Present:**
+**Present** a summary, then use `AskUserQuestion` for structured response:
 
 ```
 ══════════════════════════════════════════════════════════
@@ -446,21 +434,29 @@ Changes since intake:
 - [Note if warm-start was used]
 
 Ticket complexity: [High/Medium/Low/Trivial]
-Recommended CCR: [Full panel / Targeted / Skip]
-
-Please review the draft above.
-
-To proceed to expert review, respond with acceptance
-(e.g., "ACCEPT", "I accept this draft", "Looks good").
-
-Any other response will be treated as revision guidance.
 ══════════════════════════════════════════════════════════
+```
+
+**Then ask:**
+
+```
+AskUserQuestion:
+  question: "Proceed to expert review?"
+  header: "Checkpoint 1"
+  options:
+    - label: "Accept (full panel)"
+      description: "Run full CCR panel (PO, Architect, Developer, QA)"
+    - label: "Accept (skip CCR)"
+      description: "Skip expert review (trivial tickets only)"
+    - label: "Revise"
+      description: "Provide revision guidance"
 ```
 
 **Behavior:**
 
-- Semantic acceptance → proceed to Phase 3 (Expert Review CCR)
-- Any other response → treat as free-form revision guidance, update draft, re-present checkpoint
+- "Accept (full panel)" → proceed to Phase 3 with full panel CCR
+- "Accept (skip CCR)" → skip to Phase 6 (AI Implementation Review)
+- "Revise" or Other → treat as revision guidance, update draft, re-present checkpoint
 
 ---
 
@@ -475,11 +471,13 @@ To help the user decide, the agent should classify the ticket:
 | Complexity  | Characteristics                                      | Recommended CCR                  |
 | ----------- | ---------------------------------------------------- | -------------------------------- |
 | **High**    | Infrastructure, new architecture, security-sensitive | Full panel (Option B)            |
-| **Medium**  | Feature with new patterns, cross-cutting concerns    | Full panel or 2-3 targeted roles |
-| **Low**     | Content following established patterns, bug fixes    | Targeted review (Option A)       |
+| **Medium**  | Feature with new patterns, cross-cutting concerns    | Full panel (Option B)            |
+| **Low**     | Content following established patterns, bug fixes    | Full panel (Option B)            |
 | **Trivial** | Typo fixes, documentation updates                    | Skip CCR (ask human to confirm)  |
 
-**Agent should suggest** the appropriate CCR approach based on classification, but human decides.
+**Default recommendation: Full panel.** The full panel review is lightweight (adds ~2-3 minutes) and ensures QA validates Gherkin acceptance criteria before implementation. Only skip CCR for truly trivial changes (typos, minor doc updates).
+
+**Agent should suggest** full panel unless the ticket is trivial. Human can always request targeted review instead.
 
 ### Option A: Single Expert Review (Targeted)
 
@@ -634,7 +632,7 @@ Added rate limiting per security review (see [3.10-ccr-notes.md#security-pass-1]
 
 After ASR produces `4.20-issue-draft-reviewed.md`, proceed directly to Checkpoint 2.
 
-**Present:**
+**Present** a summary, then use `AskUserQuestion` for structured response:
 
 ```
 ══════════════════════════════════════════════════════════
@@ -653,21 +651,29 @@ Expert verdicts:
 - Architect: [APPROVE/KICKBACK]
 - Developer: [APPROVE/KICKBACK]
 - QA: [APPROVE/KICKBACK]
-
-Please review the draft above.
-
-To proceed to AI implementation review, respond with
-acceptance (e.g., "ACCEPT", "Looks good").
-
-Any other response will be treated as revision guidance.
 ══════════════════════════════════════════════════════════
+```
+
+**Then ask:**
+
+```
+AskUserQuestion:
+  question: "Proceed to AI implementation review?"
+  header: "Checkpoint 2"
+  options:
+    - label: "Accept"
+      description: "Proceed to AI implementation review (spikes, tracer bullets)"
+    - label: "Back to CCR"
+      description: "Return to expert review with updated draft"
+    - label: "Revise"
+      description: "Provide revision guidance"
 ```
 
 **Behavior:**
 
-- Semantic acceptance → proceed to Phase 6 (AI Implementation Review)
-- "back to CCR" → return to Phase 3 (Expert Review) with updated draft
-- Any other response → treat as revision guidance, update `4.20-issue-draft-reviewed.md`, re-present Checkpoint 2
+- "Accept" → proceed to Phase 6 (AI Implementation Review)
+- "Back to CCR" → return to Phase 3 (Expert Review) with updated draft
+- "Revise" or Other → treat as revision guidance, update `4.20-issue-draft-reviewed.md`, re-present Checkpoint 2
 
 ### Revision Loop (on non-acceptance)
 
@@ -912,7 +918,7 @@ Before presenting Checkpoint 3, the agent must:
 
 ## Checkpoint 3 — Approve to Create GitHub Issue (STOP POINT)
 
-**Present:**
+**Present** a summary, then use `AskUserQuestion` for structured response:
 
 ```
 ══════════════════════════════════════════════════════════
@@ -931,46 +937,42 @@ Readiness summary:
 - Spikes: [N run, all confirmed / X blockers found]
 - Tracer bullets: [N defined]
 - Open questions: [None / List any remaining]
-
-[If size >= L, include split analysis:]
 ══════════════════════════════════════════════════════════
- SPLIT ANALYSIS (Size >= L)
-══════════════════════════════════════════════════════════
-Current size: L (~X hours)
+```
 
-Option 1: [Description]
-  - Story A: [scope] (Size: M)
-  - Story B: [scope] (Size: S)
-  Dependencies: Story B depends on Story A
+**Then ask (for size < L):**
 
-Option 2: [Description]
-  - Story A: [scope] (Size: S)
-  - Story B: [scope] (Size: M)
-  Dependencies: [none / description]
+```
+AskUserQuestion:
+  question: "Create the GitHub issue?"
+  header: "Checkpoint 3"
+  options:
+    - label: "Accept"
+      description: "Create GitHub issue and archive refinement artifacts"
+    - label: "Revise"
+      description: "Provide revision guidance"
+```
 
-Recommendation: [Which option and why]
+**For size >= L, include split analysis in summary and ask:**
 
-Your choices:
-1. Proceed with L as-is
-2. Split now (refine first story, create backlog stubs)
-3. Revise scope to reduce size
-══════════════════════════════════════════════════════════
-
-This draft is ready to become a GitHub issue.
-
-To create the issue, respond with acceptance
-(e.g., "ACCEPT", "Create it", "Ship it").
-
-To split, respond with "split" and your choice.
-
-Any other response will be treated as revision guidance.
-══════════════════════════════════════════════════════════
+```
+AskUserQuestion:
+  question: "This is a large ticket. How would you like to proceed?"
+  header: "Checkpoint 3"
+  options:
+    - label: "Accept as-is"
+      description: "Create single L/XL issue"
+    - label: "Split"
+      description: "Split into smaller stories (will prompt for split choice)"
+    - label: "Revise"
+      description: "Reduce scope to shrink size"
 ```
 
 **Behavior:**
 
-- Semantic acceptance → immediately create GitHub issue
-- Any other response → treat as revision guidance, update draft, re-present checkpoint
+- "Accept" / "Accept as-is" → immediately create GitHub issue
+- "Split" → prompt for split option, create first story issue + backlog stubs
+- "Revise" or Other → treat as revision guidance, update draft, re-present checkpoint
 
 ---
 
@@ -1199,7 +1201,7 @@ Context window usage:
 ┌─────────────────────────┬──────────┬─────────────────┐
 │ Phase                   │ Duration │ Tokens (approx) │
 ├─────────────────────────┼──────────┼─────────────────┤
-│ Phase 0: Intake         │ Xm       │ ~X              │
+│ Phase 0: Slug & Intake  │ Xm       │ ~X              │
 │ Phase 1: Nucleus        │ Xm       │ ~X              │
 │ Phase 3-4: CCR+ASR      │ Xm       │ ~X              │
 │ Phase 5: Draft Loop     │ Xm       │ ~X              │
