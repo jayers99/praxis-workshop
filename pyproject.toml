@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "praxis-workshop"
+version = "0.1.0"
+description = "Symlink-based workshop system for managing work items through stages"
+authors = ["jayers99"]
+readme = "README.md"
+license = "MIT"
+
+packages = [{ include = "steward", from = "src" }]
+
+[tool.poetry.scripts]
+steward = "steward.cli:app"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+typer = "^0.15.1"
+rich = "^13.9.4"
+pydantic = "^2.10.4"
+pyyaml = "^6.0.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-bdd = "^8.1.0"
+ruff = "^0.8.4"
+mypy = "^1.14.1"
+types-pyyaml = "^6.0.12"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+ignore_errors = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
