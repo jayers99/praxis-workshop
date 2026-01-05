@@ -85,6 +85,24 @@ flowchart TD
 
 ---
 
+## Prerequisites
+
+This runbook supports two modes:
+- **CLI mode (recommended):** Requires `praxis` CLI with research and library commands
+- **Manual mode (fallback):** Works without CLI using bash commands
+
+### Version Check
+
+```bash
+praxis --version  # Requires >= 0.1.0
+praxis library --help
+praxis research --help
+```
+
+If CLI commands are not available, the runbook includes manual fallback instructions inline.
+
+---
+
 ## Session Contract
 
 - **Mode:** Active session logging in working folder
@@ -172,8 +190,13 @@ Working folder: `_workshop/5-active/3-forge/<slug>/`
 **Mandatory step:** Search research-library for relevant prior work.
 
 ```bash
-# Search CATALOG.md for related keywords
-grep -i "<topic-keywords>" $PRAXIS_HOME/praxis-ai/research-library/CATALOG.md
+# CLI mode (recommended)
+praxis library search --keyword "<topic-keywords>"
+# Optionally filter by topic:
+praxis library search --keyword "<topic-keywords>" --topic "<topic>"
+
+# Manual fallback
+# grep -i "<topic-keywords>" $PRAXIS_HOME/praxis-ai/research-library/CATALOG.md
 ```
 
 Present findings:
@@ -675,18 +698,22 @@ AskUserQuestion:
 ### Move to Research Library
 
 ```bash
-# Determine target path
-topic="<topic>"
-slug="<artifact-slug>"
-target="$PRAXIS_HOME/praxis-ai/research-library/${topic}/${slug}.md"
+# CLI mode (recommended) — automatic cataloging on approve
+praxis research approve --rationale "ready for cataloging"
+# This copies the artifact to research-library and updates CATALOG.md automatically
 
-# Copy artifact
-cp <working-folder>/9.10-research-artifact.md "$target"
+# Manual fallback
+# topic="<topic>"
+# slug="<artifact-slug>"
+# target="$PRAXIS_HOME/praxis-ai/research-library/${topic}/${slug}.md"
+# cp <working-folder>/9.10-research-artifact.md "$target"
 ```
 
 ### Update CATALOG.md
 
-Generate update instructions in `9.20-catalog-update.md`:
+When using CLI mode, CATALOG.md is updated automatically by `praxis research approve`.
+
+For manual mode, generate update instructions in `9.20-catalog-update.md`:
 
 ```markdown
 # CATALOG.md Update
