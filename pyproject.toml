@@ -24,6 +24,7 @@ pytest-bdd = "^8.1.0"
 ruff = "^0.8.4"
 mypy = "^1.14.1"
 types-pyyaml = "^6.0.12"
+pre-commit = "^4.5.1"
 
 [tool.ruff]
 line-length = 88
