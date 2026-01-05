@@ -27,11 +27,14 @@ types-pyyaml = "^6.0.12"
 pre-commit = "^4.5.1"
 
 [tool.ruff]
-line-length = 88
+line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -39,6 +42,7 @@ strict = true
 warn_return_any = true
 warn_unused_ignores = true
 files = ["src"]
+exclude = ["tests/"]
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
