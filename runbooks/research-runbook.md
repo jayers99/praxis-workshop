@@ -70,7 +70,7 @@ flowchart TD
 | 1 | `1.10-rtc-questions.md` | IDAS |
 | 2 | `2.20-idas-synthesis.md` | SAD/CCR |
 | 3 | `3.20-ccr-notes.md` | ASR |
-| 4 (HVA) | `4.10-asr-synthesis.md` | Cataloging |
+| 4 (HVA) | `7.10-<slug>-draft.md` | Cataloging |
 
 ### Risk Tiers
 
@@ -112,6 +112,18 @@ If CLI commands are not available, the runbook includes manual fallback instruct
 - **Non-decisional:** This runbook produces knowledge, not commitments
 - **Approval:** Semantic acceptance required at checkpoints
 
+**IMPORTANT: File Output Path**
+
+Always write files using the **symlink path** (e.g., `_workshop/5-active/3-forge/<slug>/`), NOT the full timestamped canonical path. The symlink ensures files land in `_workshop/9-items/<timestamp>__<slug>/` automatically.
+
+```bash
+# CORRECT - use symlink path
+_workshop/5-active/3-forge/code-agent-architectural-direction/1.10-rtc-questions.md
+
+# WRONG - don't use full timestamped path directly
+_workshop/5-active/3-forge/2026-01-04-1840__code-agent-architectural-direction/1.10-rtc-questions.md
+```
+
 ---
 
 ## Artifact Naming Convention
@@ -136,7 +148,7 @@ All artifacts use stable ordering prefixes: `P.SS-<name>.md`
 | `2.20-idas-synthesis.md` | Draft synthesis (pre-expert review) |
 | `3.10-sad-dispatch.md` | Specialist assignments and outputs |
 | `3.20-ccr-notes.md` | Critical challenge outputs |
-| `4.10-asr-synthesis.md` | Final synthesis (post-adjudication) |
+| `7.10-<slug>-draft.md` | Final synthesis draft for HVA review |
 | `9.10-research-artifact.md` | Final artifact for research-library |
 | `9.20-catalog-update.md` | CATALOG.md update instructions |
 | `9.30-runbook-retrospective.md` | Session retrospective |
@@ -555,7 +567,7 @@ For each conflict identified in IDAS or CCR:
 
 ### Final Synthesis
 
-Produce the final artifact draft in `4.10-asr-synthesis.md`:
+Produce the final artifact draft in `7.10-<slug>-draft.md` (e.g., `7.10-agent-architectural-direction-draft.md`):
 
 ```markdown
 # <Title>
@@ -654,7 +666,7 @@ This is the final human gate.
  CHECKPOINT 4: Human Validation & Acceptance (HVA)
 ══════════════════════════════════════════════════════════
 
-Final Artifact: <working-folder>/4.10-asr-synthesis.md
+Final Artifact: <working-folder>/7.10-<slug>-draft.md
 
 Title: <title>
 Topic: <topic>
@@ -689,7 +701,7 @@ AskUserQuestion:
 
 ### Prepare Final Artifact
 
-1. Copy `4.10-asr-synthesis.md` to `9.10-research-artifact.md`
+1. Copy `7.10-<slug>-draft.md` to `9.10-research-artifact.md`
 2. Update metadata:
    - `status: approved`
    - Add `approved_by: human`
