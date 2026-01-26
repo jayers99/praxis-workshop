@@ -103,7 +103,7 @@ steward stage my-feature trash
 
 ## Path Stability
 
-Unlike `bench/` folder moves, workshop items stay at their canonical path:
+Workshop items stay at their canonical path:
 ```
 _workshop/9-items/2026-01-04-1530__my-feature/
 ```
