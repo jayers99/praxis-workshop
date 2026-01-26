@@ -59,7 +59,7 @@ Issues created via the Ticket Refinement Runbook should be maturity:ready.
 
 ## Links
 
-- Bench WIP folder: `bench/wip/<folder>`
+- WIP folder: `_workshop/5-active/3-forge/<slug>/`
 - Related docs/specs:
 - Related PRs:
 
@@ -69,7 +69,7 @@ Issues created via the Ticket Refinement Runbook should be maturity:ready.
 
 1. Copy this file to a temp location (recommended):
 
-- `cp bench/backlog/_templates/github-issue-feature.md .gh-temp/issue.md`
+- `cp extensions/praxis-workshop/templates/github-issue-feature.md .gh-temp/issue.md`
 
 2. Edit `.gh-temp/issue.md`, then create:
 
