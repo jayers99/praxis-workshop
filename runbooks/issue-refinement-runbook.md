@@ -1167,8 +1167,6 @@ The following are explicitly **out of scope** for this runbook:
 - Interactive expert roundtables / multi-party CCR
 - New tooling/automation beyond templates and `gh issue create`
 
-For roundtable requirements, see: `bench/backlog/2026-kaizen-blitz/01.6-ticket-refinement-runbook/praxis_roundtable_refinement_handoff.md`
-
 ---
 
 ## Appendix: Runbook Retrospective
