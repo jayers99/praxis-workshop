@@ -691,6 +691,8 @@ AskUserQuestion:
       description: "Catalog in research-library"
     - label: "Refine"
       description: "Return to IDAS for more research"
+    - label: "Shelf"
+      description: "Move to shelf for later review (steward stage <slug> shelf)"
     - label: "Reject"
       description: "Archive as draft (not cataloged)"
 ```
