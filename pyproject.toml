@@ -1,30 +1,37 @@
-[tool.poetry]
+[project]
 name = "praxis-workshop"
 version = "0.1.0"
 description = "Symlink-based workshop system for managing work items through stages"
-authors = ["jayers99"]
+authors = [{ name = "jayers99" }]
 readme = "README.md"
 license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "typer>=0.15.1,<0.16",
+    "rich>=13.9.4",
+    "pydantic>=2.10.4",
+    "pyyaml>=6.0.2",
+]
 
-packages = [{ include = "steward", from = "src" }]
-
-[tool.poetry.scripts]
+[project.scripts]
 steward = "steward.cli:app"
 
-[tool.poetry.dependencies]
-python = "^3.12"
-typer = "^0.15.1"
-rich = "^13.9.4"
-pydantic = "^2.10.4"
-pyyaml = "^6.0.2"
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-bdd>=8.1.0",
+    "ruff>=0.8.4",
+    "mypy>=1.14.1",
+    "types-pyyaml>=6.0.12",
+    "pre-commit>=4.5.1",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.4"
-pytest-bdd = "^8.1.0"
-ruff = "^0.8.4"
-mypy = "^1.14.1"
-types-pyyaml = "^6.0.12"
-pre-commit = "^4.5.1"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/steward"]
 
 [tool.ruff]
 line-length = 120
@@ -47,7 +54,3 @@ exclude = ["tests/"]
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 ignore_errors = true
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
